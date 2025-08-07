@@ -7,7 +7,7 @@ git clone https://github.com/issam-hub/bitnix
 cd backend
 go mod download
 ```
-2- Setup some required tools: \
+2- Setup some required tools: 
 - **air**: for hot-reloading, see this [link](https://github.com/air-verse/air) 
 -  **go-migrate**: for database migrations, see this [link](https://github.com/golang-migrate/migrate) 
 -  **echo-swagger**: for swagger docs generation, see this [link](https://github.com/swaggo/echo-swagger)
