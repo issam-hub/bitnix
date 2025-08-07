@@ -8,9 +8,9 @@ cd backend
 go mod download
 ```
 2- Setup some required tools: \
-2-1 air: for hot-reloading, see this [link](https://github.com/air-verse/air) \
-2-2 go-migrate: for database migrations, see this [link](https://github.com/golang-migrate/migrate) \
-2-3 echo-swagger: for swagger docs generation, see this [link](https://github.com/swaggo/echo-swagger)
+  2-1 air: for hot-reloading, see this [link](https://github.com/air-verse/air) \
+  2-2 go-migrate: for database migrations, see this [link](https://github.com/golang-migrate/migrate) \
+  2-3 echo-swagger: for swagger docs generation, see this [link](https://github.com/swaggo/echo-swagger)
 
 3- Create `.env` file, check `.env.example` to get an idea
 
