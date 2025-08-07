@@ -1,0 +1,75 @@
+basePath: /api/v1
+definitions:
+  request.CreateGameRequest:
+    properties:
+      assets:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      developer_id:
+        type: string
+      price:
+        type: number
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  response.CreateGameResponse:
+    properties:
+      id:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Bitnix REST API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Bitnix REST API
+  version: "1.0"
+paths:
+  /api/v1/game:
+    post:
+      consumes:
+      - application/json
+      description: Create a new game with the given details
+      parameters:
+      - description: Game creation request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateGameRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CreateGameResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new game
+      tags:
+      - Game Service
+schemes:
+- http
+swagger: "2.0"
