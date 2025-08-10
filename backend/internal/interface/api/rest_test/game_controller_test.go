@@ -25,9 +25,9 @@ import (
 func TestCreateGame(t *testing.T) {
 	e := echo.New()
 
-	mockSvc := new(MockGameService)
-
 	t.Run("happy case - 201", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
 		devID := uuid.New()
 		assetsIDs := []string{
 			uuid.New().String(),
@@ -105,6 +105,8 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 400", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
 		invalidReqBody := map[string]any{
 			"title":        "",
 			"description":  "",
@@ -146,6 +148,8 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 500", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
 		devID := uuid.New()
 		assetsIDs := []string{
 			uuid.New().String(),
