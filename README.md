@@ -14,4 +14,6 @@ go mod download
 
 3- Create `.env` file, check `.env.example` to get an idea
 
-4- To visit swagger docs for the REST API, visit `http://localhost:[the used port]/swagger/index.html`
+## Notice
+- To visit swagger docs for the REST API, visit `http://localhost:[the used port]/swagger/index.html`
+- Make sure to check the makefile to utilize the automated commands for migration and test
