@@ -4,6 +4,7 @@ import (
 	"bitnix-backend/internal/application/command"
 	"bitnix-backend/internal/domain/entities"
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -30,10 +31,16 @@ func (ma *inMemoryAssetRepository) CreateAll(ctx context.Context, assets []entit
 	return nil
 }
 
+type failingInMemoryGameRepository struct{}
+
+func (fmg *failingInMemoryGameRepository) Create(ctx context.Context, game entities.Game) error {
+	return fmt.Errorf("failed to create game")
+}
+
 func TestGameService(t *testing.T) {
 	gameRepo := &inMemoryGameRepository{}
 	assetRepo := &inMemoryAssetRepository{}
-	svc := NewGameService(gameRepo, assetRepo)
+	failingGameRepo := &failingInMemoryGameRepository{}
 	cmd := command.NewCreateGameCommand(
 		"hollow knight",
 		"hollow knight game",
@@ -45,17 +52,40 @@ func TestGameService(t *testing.T) {
 		},
 	)
 
-	ctx := context.Background()
+	t.Run("happy case", func(t *testing.T) {
+		svc := NewGameService(gameRepo, assetRepo)
 
-	if _, err := svc.CreateGame(ctx, cmd); err != nil {
-		t.Errorf("error while creating the game: %v", err)
-	}
+		ctx := context.Background()
 
-	if len(gameRepo.listings) == 0 {
-		t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.listings))
-	}
+		if _, err := svc.CreateGame(ctx, cmd); err != nil {
+			t.Errorf("error while creating the game: %v", err)
+		}
 
-	if len(assetRepo.assetsListings) == 0 {
-		t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.assetsListings))
-	}
+		if len(gameRepo.listings) == 0 {
+			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.listings))
+		}
+
+		if len(assetRepo.assetsListings) == 0 {
+			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.assetsListings))
+		}
+	})
+
+	t.Run("sad case", func(t *testing.T) {
+		svc := NewGameService(failingGameRepo, assetRepo)
+
+		ctx := context.Background()
+
+		if _, err := svc.CreateGame(ctx, cmd); err == nil || err.Error() != "failed to create game" {
+			t.Errorf("expected nil or 'failed to create game' error, got: %v", err)
+		}
+
+		if len(gameRepo.listings) == 0 {
+			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.listings))
+		}
+
+		if len(assetRepo.assetsListings) == 0 {
+			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.assetsListings))
+		}
+	})
+
 }
