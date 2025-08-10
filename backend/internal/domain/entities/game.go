@@ -37,28 +37,28 @@ func (g Game) Validate() validator.ValidationErrors {
 	var errors validator.ValidationErrors
 
 	if strings.TrimSpace(g.Title) == "" {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "title",
 			Message: "title is required and cannot be empty",
 		})
 	}
 
 	if strings.TrimSpace(g.Description) == "" {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "description",
 			Message: "description is required and cannot be empty",
 		})
 	}
 
 	if g.Price.IsZero() || g.Price.IsNegative() {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "price",
 			Message: "price cannot be zero or negative",
 		})
 	}
 
 	if reflect.DeepEqual(g.Developer, User{}) {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "developer",
 			Message: "developer is required",
 		})
@@ -75,7 +75,7 @@ func (g Game) validateAssets() validator.ValidationErrors {
 	var errors validator.ValidationErrors
 
 	if len(g.Assets) == 0 {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "assets",
 			Message: "at least one asset is required",
 		})
@@ -90,7 +90,7 @@ func (g Game) validateAssets() validator.ValidationErrors {
 	}
 
 	if len(invalidAssets) > 0 {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "assets",
 			Message: fmt.Sprintf("invalid assets: %s", strings.Join(invalidAssets, ", ")),
 		})

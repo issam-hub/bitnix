@@ -31,33 +31,33 @@ func (a Asset) Validate() validator.ValidationErrors {
 	var errors validator.ValidationErrors
 
 	if strings.TrimSpace(a.Filename) == "" {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "filename",
 			Message: "filename is required",
 		})
 	}
 
 	if a.GameID == uuid.Nil {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "gameID",
 			Message: "game ID is required",
 		})
 	}
 
 	if a.Type == "" {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "type",
 			Message: "asset type is required",
 		})
 	}
 
 	if strings.TrimSpace(a.URL) == "" {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "url",
 			Message: "URL is required",
 		})
 	} else if !urlRegex.MatchString(a.URL) {
-		errors = append(errors, validator.ValidatorError{
+		errors = append(errors, validator.ValidationError{
 			Field:   "url",
 			Message: "URL format is invalid",
 		})

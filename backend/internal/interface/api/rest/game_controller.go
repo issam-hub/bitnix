@@ -4,6 +4,7 @@ import (
 	"bitnix-backend/internal/application/interfaces"
 	"bitnix-backend/internal/interface/api/rest/dto/mapper"
 	"bitnix-backend/internal/interface/api/rest/dto/request"
+	"bitnix-backend/internal/validator"
 	"context"
 	"net/http"
 	"time"
@@ -39,14 +40,15 @@ func (gc *GameController) CreateGameController(c echo.Context) error {
 	var CreateGameRequest request.CreateGameRequest
 
 	if err := c.Bind(&CreateGameRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{
-			"error": "failed to parse request body",
-		})
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	createGameCommand, err := CreateGameRequest.ToCreateGameCommand()
 	if err != nil {
-		return err
+		if errors, ok := err.(validator.ValidationErrors); ok {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.ToMap())
+		}
+		return echo.ErrInternalServerError
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -54,7 +56,7 @@ func (gc *GameController) CreateGameController(c echo.Context) error {
 
 	result, err := gc.service.CreateGame(ctx, createGameCommand)
 	if err != nil {
-		return err
+		return echo.ErrInternalServerError
 	}
 
 	response := mapper.ToCreateGameResponse(result.Result)

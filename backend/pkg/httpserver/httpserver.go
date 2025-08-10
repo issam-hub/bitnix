@@ -8,7 +8,6 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
@@ -29,7 +28,6 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 	gameService := services.NewGameService(&gameRepo, &assetRepo)
 
 	app := echo.New()
-	app.HTTPErrorHandler = customHTTPErrorHandler
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	app.Use(CustomLogger(logger))
@@ -51,22 +49,4 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.app.Shutdown(ctx)
-}
-
-func customHTTPErrorHandler(err error, c echo.Context) {
-	var status int
-	var message interface{}
-
-	switch e := err.(type) {
-	case *echo.HTTPError:
-		status = e.Code
-		message = e.Message
-	default:
-		status = http.StatusInternalServerError
-		message = "the server encountered a problem and could not process your request"
-	}
-
-	if !c.Response().Committed {
-		c.JSON(status, echo.Map{"error": message})
-	}
 }
