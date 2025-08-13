@@ -29,8 +29,12 @@ func TestCreateGame(t *testing.T) {
 		mockSvc := new(MockGameService)
 
 		devID := uuid.New()
-		assetsIDs := []string{
-			uuid.New().String(),
+		assets := []map[string]string{
+			{
+				"type":     "download",
+				"url":      "https://downloadMe.com",
+				"filename": "downloadFile",
+			},
 		}
 		reqBody := map[string]any{
 			"title":        "hollow knight",
@@ -38,7 +42,7 @@ func TestCreateGame(t *testing.T) {
 			"price":        19.99,
 			"release_date": "2025-10-06",
 			"developer_id": devID.String(),
-			"assets":       assetsIDs,
+			"assets":       assets,
 		}
 
 		reqBodyBytes, _ := json.Marshal(reqBody)
@@ -52,13 +56,9 @@ func TestCreateGame(t *testing.T) {
 
 		ctrl := rest.NewgameController(e, mockSvc)
 		releaseDate, _ := time.Parse("2006-01-02", "2025-10-06")
-		var parsedAssetsIDs []uuid.UUID
-		for _, assetID := range assetsIDs {
-			parsedAssetID, _ := uuid.Parse(assetID)
-			parsedAssetsIDs = append(parsedAssetsIDs, parsedAssetID)
-		}
 		gameID := uuid.New()
 		createdAt := time.Now()
+		assetID := uuid.New()
 		createGameCommandResult := &command.CreateGameCommandResult{
 			Result: &common.GameResult{
 				ID:          gameID,
@@ -69,7 +69,7 @@ func TestCreateGame(t *testing.T) {
 				ReleaseDate: releaseDate,
 				Assets: []entities.Asset{
 					{
-						ID:       parsedAssetsIDs[0],
+						ID:       assetID,
 						Type:     entities.DownloadFile,
 						GameID:   gameID,
 						URL:      "https://downloadMe.com",
@@ -113,7 +113,7 @@ func TestCreateGame(t *testing.T) {
 			"price":        0,
 			"release_date": "2025-10-06",
 			"developer_id": "",
-			"assets":       []string{},
+			"assets":       []map[string]string{},
 		}
 
 		reqBodyBytes, _ := json.Marshal(invalidReqBody)
@@ -151,8 +151,12 @@ func TestCreateGame(t *testing.T) {
 		mockSvc := new(MockGameService)
 
 		devID := uuid.New()
-		assetsIDs := []string{
-			uuid.New().String(),
+		assets := []map[string]string{
+			{
+				"type":     "download",
+				"url":      "https://downloadMe.com",
+				"filename": "downloadFile",
+			},
 		}
 		reqBody := map[string]any{
 			"title":        "hollow knight",
@@ -160,7 +164,7 @@ func TestCreateGame(t *testing.T) {
 			"price":        19.99,
 			"release_date": "2025-10-06",
 			"developer_id": devID.String(),
-			"assets":       assetsIDs,
+			"assets":       assets,
 		}
 
 		reqBodyBytes, _ := json.Marshal(reqBody)

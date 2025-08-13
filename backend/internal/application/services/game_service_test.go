@@ -47,12 +47,16 @@ func TestGameService(t *testing.T) {
 		*money.NewFromFloat(20.99, "USD"),
 		uuid.New(),
 		time.Date(2025, 9, 2, 0, 0, 0, 0, time.UTC),
-		[]uuid.UUID{
-			uuid.New(),
+		[]command.AssetDetail{
+			{
+				Type:     entities.DownloadFile,
+				URL:      "https://downloadMe.com",
+				Filename: "downloadFile",
+			},
 		},
 	)
 
-	t.Run("happy case", func(t *testing.T) {
+	t.Run("create game - happy case", func(t *testing.T) {
 		svc := NewGameService(gameRepo, assetRepo)
 
 		ctx := context.Background()
@@ -70,7 +74,7 @@ func TestGameService(t *testing.T) {
 		}
 	})
 
-	t.Run("sad case", func(t *testing.T) {
+	t.Run("create game - sad case", func(t *testing.T) {
 		svc := NewGameService(failingGameRepo, assetRepo)
 
 		ctx := context.Background()
