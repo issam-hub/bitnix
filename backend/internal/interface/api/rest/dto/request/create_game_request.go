@@ -2,9 +2,10 @@ package request
 
 import (
 	"bitnix-backend/internal/application/command"
+	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/validator"
-	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -12,19 +13,21 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrInvalidDevID       = errors.New("invalid developer ID format")
-	ErrInvalidReleaseDate = errors.New("invalid release date format")
-	ErrInvalidAssetID     = errors.New("invalid asset ID format")
-)
+var urlRegex = regexp.MustCompile(`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$`)
+
+type AssetRequest struct {
+	Type     string `json:"type"`
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+}
 
 type CreateGameRequest struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Price       float64  `json:"price"`
-	ReleaseDate string   `json:"release_date"`
-	DeveloperID string   `json:"developer_id"`
-	Assets      []string `json:"assets"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Price       float64        `json:"price"`
+	ReleaseDate string         `json:"release_date"`
+	DeveloperID string         `json:"developer_id"`
+	Assets      []AssetRequest `json:"assets"`
 }
 
 func (req *CreateGameRequest) Validate() validator.ValidationErrors {
@@ -63,7 +66,52 @@ func (req *CreateGameRequest) Validate() validator.ValidationErrors {
 			Message: "it should be at least one asset",
 		})
 	}
+
+	// Validate each asset
+	for i, asset := range req.Assets {
+		if strings.TrimSpace(asset.Type) == "" {
+			errors = append(errors, validator.ValidationError{
+				Field:   fmt.Sprintf("assets[%d].type", i),
+				Message: "asset type is required",
+			})
+		}
+
+		if strings.TrimSpace(asset.URL) == "" {
+			errors = append(errors, validator.ValidationError{
+				Field:   fmt.Sprintf("assets[%d].url", i),
+				Message: "URL is required",
+			})
+		} else if !urlRegex.MatchString(asset.URL) {
+			errors = append(errors, validator.ValidationError{
+				Field:   fmt.Sprintf("assets[%d].url", i),
+				Message: "URL format is invalid",
+			})
+		}
+
+		if strings.TrimSpace(asset.Filename) == "" {
+			errors = append(errors, validator.ValidationError{
+				Field:   fmt.Sprintf("assets[%d].filename", i),
+				Message: "filename is required",
+			})
+		}
+	}
+
 	return errors
+}
+
+func parseAssetType(assetType string) (entities.AssetType, error) {
+	switch assetType {
+	case "cover":
+		return entities.CoverImage, nil
+	case "trailer":
+		return entities.TrailerVideo, nil
+	case "download":
+		return entities.DownloadFile, nil
+	case "screenshot":
+		return entities.Screeshot, nil
+	default:
+		return "", fmt.Errorf("invalid asset type: %s", assetType)
+	}
 }
 
 func (req *CreateGameRequest) ToCreateGameCommand() (*command.CreateGameCommand, error) {
@@ -87,16 +135,21 @@ func (req *CreateGameRequest) ToCreateGameCommand() (*command.CreateGameCommand,
 		})
 	}
 
-	var parsedAssetsIDs []uuid.UUID
-	for i, assetID := range req.Assets {
-		parsedAssetID, err := uuid.Parse(assetID)
+	var assetDetails []command.AssetDetail
+	for _, asset := range req.Assets {
+		assetType, err := parseAssetType(asset.Type)
 		if err != nil {
 			return nil, append(validationErrors, validator.ValidationError{
-				Field:   "assets",
-				Message: fmt.Sprintf("invalid asset ID #%d format", i+1),
+				Field:   "assets.type",
+				Message: err.Error(),
 			})
 		}
-		parsedAssetsIDs = append(parsedAssetsIDs, parsedAssetID)
+
+		assetDetails = append(assetDetails, command.AssetDetail{
+			Type:     assetType,
+			URL:      asset.URL,
+			Filename: asset.Filename,
+		})
 	}
 
 	return &command.CreateGameCommand{
@@ -105,6 +158,6 @@ func (req *CreateGameRequest) ToCreateGameCommand() (*command.CreateGameCommand,
 		Price:       *money.NewFromFloat(req.Price, "USD"),
 		DeveloperID: devID,
 		ReleaseDate: releaseDate,
-		Assets:      parsedAssetsIDs,
+		Assets:      assetDetails,
 	}, nil
 }

@@ -40,15 +40,18 @@ func (s GameService) CreateGame(ctx context.Context, gameCommand *command.Create
 		gameCommand.ReleaseDate,
 		[]entities.Asset{},
 	)
-	game.Assets = []entities.Asset{
-		{
+
+	var assets []entities.Asset
+	for _, assetDetail := range gameCommand.Assets {
+		assets = append(assets, entities.Asset{
 			ID:       uuid.New(),
-			Type:     entities.DownloadFile,
+			Type:     assetDetail.Type,
 			GameID:   game.ID,
-			URL:      "https://downloadMe.com",
-			Filename: "downloadFile",
-		},
+			URL:      assetDetail.URL,
+			Filename: assetDetail.Filename,
+		})
 	}
+	game.Assets = assets
 
 	if err := s.gameRepository.Create(ctx, *game); err != nil {
 		return nil, err

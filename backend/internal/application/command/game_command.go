@@ -2,11 +2,18 @@ package command
 
 import (
 	"bitnix-backend/internal/application/common"
+	"bitnix-backend/internal/domain/entities"
 	"time"
 
 	"github.com/Rhymond/go-money"
 	"github.com/google/uuid"
 )
+
+type AssetDetail struct {
+	Type     entities.AssetType
+	URL      string
+	Filename string
+}
 
 type CreateGameCommand struct {
 	Title       string
@@ -14,10 +21,10 @@ type CreateGameCommand struct {
 	Price       money.Money
 	DeveloperID uuid.UUID
 	ReleaseDate time.Time
-	Assets      []uuid.UUID
+	Assets      []AssetDetail
 }
 
-func NewCreateGameCommand(title string, description string, price money.Money, developerID uuid.UUID, releaseDate time.Time, assets []uuid.UUID) *CreateGameCommand {
+func NewCreateGameCommand(title string, description string, price money.Money, developerID uuid.UUID, releaseDate time.Time, assets []AssetDetail) *CreateGameCommand {
 	return &CreateGameCommand{
 		Title:       title,
 		Description: description,
