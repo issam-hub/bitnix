@@ -2,13 +2,16 @@ package rest
 
 import (
 	"bitnix-backend/internal/application/interfaces"
+	"bitnix-backend/internal/domain/apperrors"
 	"bitnix-backend/internal/interface/api/rest/dto/mapper"
 	"bitnix-backend/internal/interface/api/rest/dto/request"
 	"bitnix-backend/internal/validator"
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,7 +24,10 @@ func NewgameController(e *echo.Echo, service interfaces.GameService) *GameContro
 		service: service,
 	}
 
-	e.POST("/api/v1/game", controller.CreateGameController)
+	router := e.Group("/api/v1")
+
+	router.POST("/game", controller.CreateGameController)
+	router.GET("/game/:id", controller.GetGameController)
 
 	return controller
 }
@@ -34,8 +40,8 @@ func NewgameController(e *echo.Echo, service interfaces.GameService) *GameContro
 // @Param request body request.CreateGameRequest true "Game creation request"
 // @Success 201 {object} response.CreateGameResponse
 // @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/v1/game [post]
+// @Failure 500 {object} resterror.ErrInternal
+// @Router /game [post]
 func (gc *GameController) CreateGameController(c echo.Context) error {
 	var CreateGameRequest request.CreateGameRequest
 
@@ -62,4 +68,39 @@ func (gc *GameController) CreateGameController(c echo.Context) error {
 	response := mapper.ToCreateGameResponse(result.Result)
 
 	return c.JSON(http.StatusCreated, response)
+}
+
+// @Summary get a game
+// @Description Get a game using its identifier
+// @Tags Game Service
+// @Accept json
+// @Produce json
+// @Param id path string true "Game ID (UUID)"
+// @Success 200 {object} response.GetGameResponse
+// @Failure 400 {object} resterror.ErrGetGameBadRequest
+// @Failure 404 {object} resterror.ErrGameNotFoundResponse
+// @Failure 500 {object} resterror.ErrInternal
+// @Router /game/{id} [get]
+func (gc *GameController) GetGameController(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid game ID format")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := gc.service.GetGame(ctx, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, apperrors.ErrGameNotFound):
+			return echo.NewHTTPError(http.StatusNotFound, apperrors.ErrGameNotFound.Error())
+		default:
+			return echo.ErrInternalServerError
+		}
+	}
+
+	response := mapper.ToGetGameResponse(result.Result)
+
+	return c.JSON(http.StatusOK, response)
 }

@@ -2,8 +2,10 @@ package resttest
 
 import (
 	"bitnix-backend/internal/application/command"
+	"bitnix-backend/internal/application/query"
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -16,6 +18,16 @@ func (m *MockGameService) CreateGame(ctx context.Context, gameCommand *command.C
 
 	if result := args.Get(0); result != nil {
 		return result.(*command.CreateGameCommandResult), args.Error(1)
+	}
+
+	return nil, args.Error(1)
+}
+
+func (m *MockGameService) GetGame(ctx context.Context, id uuid.UUID) (*query.GameQueryResult, error) {
+	args := m.Called(ctx, id)
+
+	if result := args.Get(0); result != nil {
+		return result.(*query.GameQueryResult), args.Error(1)
 	}
 
 	return nil, args.Error(1)

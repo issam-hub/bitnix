@@ -1,10 +1,14 @@
 package postgres
 
 import (
+	"bitnix-backend/internal/domain/apperrors"
 	"bitnix-backend/internal/domain/entities"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type PostgresGameRepository struct {
@@ -37,4 +41,33 @@ func (pgr PostgresGameRepository) Create(ctx context.Context, game entities.Game
 	}
 	fmt.Println(dbGame.CreatedAt)
 	return nil
+}
+
+func (fmg PostgresGameRepository) Get(ctx context.Context, id uuid.UUID) (*entities.Game, error) {
+	query := `SELECT id, title, description, price, developer_id, release_date, created_at FROM games WHERE id = $1`
+
+	var dbGame Game
+
+	err := fmg.DB.QueryRowContext(ctx, query, id).Scan(
+		&dbGame.ID,
+		&dbGame.Title,
+		&dbGame.Description,
+		&dbGame.Price,
+		&dbGame.DeveloperID,
+		&dbGame.ReleaseDate,
+		&dbGame.CreatedAt,
+	)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, apperrors.ErrGameNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	game := fromDBGame(&dbGame)
+
+	return game, nil
 }
