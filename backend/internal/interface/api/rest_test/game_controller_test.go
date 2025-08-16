@@ -3,11 +3,14 @@ package resttest
 import (
 	"bitnix-backend/internal/application/command"
 	"bitnix-backend/internal/application/common"
+	"bitnix-backend/internal/application/query"
+	"bitnix-backend/internal/domain/apperrors"
 	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/interface/api/rest"
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -190,6 +193,150 @@ func TestCreateGame(t *testing.T) {
 		expectedError := "Internal Server Error"
 
 		assert.Equal(t, expectedError, httpErr.Message)
+
+		mockSvc.AssertExpectations(t)
+	})
+}
+
+func TestGetGame(t *testing.T) {
+	e := echo.New()
+
+	t.Run("happy case - 200", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
+		gameID := uuid.New()
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/game/%s", gameID.String()), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(gameID.String())
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		releaseDate, _ := time.Parse("2006-01-02", "2025-10-06")
+		createdAt := time.Now()
+		assetID := uuid.New()
+		devID := uuid.New()
+		getGameQueryResult := &query.GameQueryResult{
+			Result: &common.GameResult{
+				ID:          gameID,
+				Title:       "hollow knight",
+				Description: "hollow knight game",
+				Price:       *money.NewFromFloat(19.99, "USD"),
+				DeveloperID: devID,
+				ReleaseDate: releaseDate,
+				Assets: []entities.Asset{
+					{
+						ID:       assetID,
+						Type:     entities.DownloadFile,
+						GameID:   gameID,
+						URL:      "https://downloadMe.com",
+						Filename: "downloadFile",
+					},
+				},
+				CreatedAt: createdAt,
+			},
+		}
+
+		mockSvc.On("GetGame", mock.Anything, mock.AnythingOfType("uuid.UUID")).Return(getGameQueryResult, nil)
+
+		err := ctrl.GetGameController(c)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var expectedAssets []any
+
+		for _, asset := range getGameQueryResult.Result.Assets {
+			expectedAssets = append(expectedAssets, map[string]any{
+				"id":       asset.ID.String(),
+				"type":     string(asset.Type),
+				"filename": asset.Filename,
+				"url":      asset.URL,
+			})
+		}
+
+		expectedResponseBody := map[string]any{
+			"id":           gameID.String(),
+			"title":        getGameQueryResult.Result.Title,
+			"description":  getGameQueryResult.Result.Description,
+			"price":        getGameQueryResult.Result.Price.AsMajorUnits(),
+			"developer_id": getGameQueryResult.Result.DeveloperID.String(),
+			"release_date": getGameQueryResult.Result.ReleaseDate.String(),
+			"assets":       expectedAssets,
+		}
+
+		var actualResponseBody map[string]any
+
+		err = json.Unmarshal(rec.Body.Bytes(), &actualResponseBody)
+		if err != nil {
+			t.Fatalf("failed to decode response body: %v", err)
+		}
+
+		assert.Equal(t, expectedResponseBody, actualResponseBody)
+
+		mockSvc.AssertExpectations(t)
+	})
+
+	t.Run("sade case - 400", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
+		gameID := "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/game/%s", gameID), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(gameID)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		err := ctrl.GetGameController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
+
+		expectedError := "invalid game ID format"
+
+		assert.Equal(t, expectedError, httpErr.Message)
+	})
+
+	t.Run("sad case - 404", func(t *testing.T) {
+		mockSvc := new(MockGameService)
+
+		gameID := uuid.New()
+
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/game/%s", gameID.String()), nil)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		c.SetParamNames("id")
+		c.SetParamValues(gameID.String())
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		mockSvc.On("GetGame", mock.Anything, mock.AnythingOfType("uuid.UUID")).Return(nil, apperrors.ErrGameNotFound)
+
+		err := ctrl.GetGameController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+		assert.Equal(t, http.StatusNotFound, httpErr.Code)
+
+		assert.Equal(t, apperrors.ErrGameNotFound.Error(), httpErr.Message)
 
 		mockSvc.AssertExpectations(t)
 	})

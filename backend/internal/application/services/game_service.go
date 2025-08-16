@@ -3,6 +3,7 @@ package services
 import (
 	"bitnix-backend/internal/application/command"
 	"bitnix-backend/internal/application/mapper"
+	"bitnix-backend/internal/application/query"
 	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/domain/repositories"
 	"context"
@@ -65,5 +66,29 @@ func (s GameService) CreateGame(ctx context.Context, gameCommand *command.Create
 
 	return &command.CreateGameCommandResult{
 		Result: commandResult,
+	}, nil
+}
+
+func (s GameService) GetGame(ctx context.Context, id uuid.UUID) (*query.GameQueryResult, error) {
+	game, err := s.gameRepository.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	assetPointers, err := s.assetRepository.GetAllByGame(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	assets := make([]entities.Asset, len(assetPointers))
+	for i, asset := range assetPointers {
+		assets[i] = *asset
+	}
+	game.Assets = assets
+
+	queryResult := mapper.NewGameResultFromEntity(game)
+
+	return &query.GameQueryResult{
+		Result: queryResult,
 	}, nil
 }

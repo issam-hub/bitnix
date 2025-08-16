@@ -38,5 +38,9 @@ migrateForce:
 .PHONY: test
 test:
 	go test -v ./internal/application/services \
-	./internal/domain/entities \
 	./internal/interface/api/rest_test
+
+
+.PHONY: docs-gen
+docs-gen:
+	swag init -g cmd/app/main.go

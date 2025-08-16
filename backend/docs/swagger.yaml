@@ -1,10 +1,19 @@
 basePath: /api/v1
 definitions:
+  request.AssetRequest:
+    properties:
+      filename:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
   request.CreateGameRequest:
     properties:
       assets:
         items:
-          type: string
+          $ref: '#/definitions/request.AssetRequest'
         type: array
       description:
         type: string
@@ -17,9 +26,57 @@ definitions:
       title:
         type: string
     type: object
+  response.AssetResponse:
+    properties:
+      filename:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+    type: object
   response.CreateGameResponse:
     properties:
       id:
+        type: string
+    type: object
+  response.GetGameResponse:
+    properties:
+      assets:
+        items:
+          $ref: '#/definitions/response.AssetResponse'
+        type: array
+      description:
+        type: string
+      developer_id:
+        type: string
+      id:
+        type: string
+      price:
+        type: number
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  resterror.ErrGameNotFoundResponse:
+    properties:
+      error:
+        example: game not found
+        type: string
+    type: object
+  resterror.ErrGetGameBadRequest:
+    properties:
+      error:
+        example: invalid game ID format
+        type: string
+    type: object
+  resterror.ErrInternal:
+    properties:
+      error:
+        example: Internal Server Error
         type: string
     type: object
 host: localhost:8080
@@ -36,7 +93,7 @@ info:
   title: Bitnix REST API
   version: "1.0"
 paths:
-  /api/v1/game:
+  /game:
     post:
       consumes:
       - application/json
@@ -64,10 +121,41 @@ paths:
         "500":
           description: Internal Server Error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/resterror.ErrInternal'
       summary: Create a new game
+      tags:
+      - Game Service
+  /game/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a game using its identifier
+      parameters:
+      - description: Game ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.GetGameResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/resterror.ErrGetGameBadRequest'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/resterror.ErrGameNotFoundResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/resterror.ErrInternal'
+      summary: get a game
       tags:
       - Game Service
 schemes:
