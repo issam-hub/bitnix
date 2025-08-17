@@ -13,6 +13,11 @@ go mod download
 -  **echo-swagger**: for swagger docs generation, see this [link](https://github.com/swaggo/echo-swagger)
 
 3- Create `.env` file, check `.env.example` to get an idea
+4- add the environment variable `BITNIX_DSN` that contains the DSN (Data Source Name) for the database
+```bash
+// .zshrc / .bashrc / .zsh_profile / .bash_profile
+BITNIX_DSN="postgres://[db_username]:[db_password]@localhost/[db_name]"
+```
 
 ## Notice
 - To visit swagger docs for the REST API, visit `http://localhost:[the used port]/swagger/index.html`
