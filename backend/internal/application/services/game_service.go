@@ -2,10 +2,12 @@ package services
 
 import (
 	"bitnix-backend/internal/application/command"
+	"bitnix-backend/internal/application/common"
 	"bitnix-backend/internal/application/mapper"
 	"bitnix-backend/internal/application/query"
 	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/domain/repositories"
+	"bitnix-backend/internal/infrastructure/interfaces"
 	"context"
 
 	"github.com/google/uuid"
@@ -14,15 +16,18 @@ import (
 type GameService struct {
 	gameRepository  repositories.GameRepository
 	assetRepository repositories.AssetRepository
+	storageClient   interfaces.StorageClient
 }
 
 func NewGameService(
 	gameRepository repositories.GameRepository,
 	assetRepository repositories.AssetRepository,
+	storageClient interfaces.StorageClient,
 ) GameService {
 	return GameService{
 		gameRepository:  gameRepository,
 		assetRepository: assetRepository,
+		storageClient:   storageClient,
 	}
 }
 
@@ -90,5 +95,27 @@ func (s GameService) GetGame(ctx context.Context, id uuid.UUID) (*query.GameQuer
 
 	return &query.GameQueryResult{
 		Result: queryResult,
+	}, nil
+}
+
+func (s GameService) UploadAssets(ctx context.Context, assetsCommand *command.UploadAssetsCommand) (*command.UploadAssetsCommandResult, error) {
+	var uploadResults []*common.AssetResult
+	for _, asset := range assetsCommand.Assets {
+		url, err := s.storageClient.Upload(ctx, "uploads/files/"+asset.Filename, asset.Content, asset.ContentType)
+		if err != nil {
+			return nil, err
+		}
+
+		entityAsset := entities.NewAsset(
+			asset.Type,
+			url,
+			asset.Filename,
+		)
+
+		uploadResults = append(uploadResults, mapper.NewUploadAssetResultFromEntity(entityAsset))
+	}
+
+	return &command.UploadAssetsCommandResult{
+		Result: uploadResults,
 	}, nil
 }

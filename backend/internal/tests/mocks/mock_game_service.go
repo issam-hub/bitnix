@@ -1,4 +1,4 @@
-package resttest
+package mocks
 
 import (
 	"bitnix-backend/internal/application/command"
@@ -31,4 +31,8 @@ func (m *MockGameService) GetGame(ctx context.Context, id uuid.UUID) (*query.Gam
 	}
 
 	return nil, args.Error(1)
+}
+
+func (m *MockGameService) UploadAssets(ctx context.Context, assetsCommand *command.UploadAssetsCommand) (*command.UploadAssetsCommandResult, error) {
+	return nil, nil
 }

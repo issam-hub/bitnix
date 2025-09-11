@@ -7,10 +7,12 @@ import (
 	"bitnix-backend/internal/domain/apperrors"
 	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/interface/api/rest"
+	"bitnix-backend/internal/tests/mocks"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +31,7 @@ func TestCreateGame(t *testing.T) {
 	e := echo.New()
 
 	t.Run("happy case - 201", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		devID := uuid.New()
 		assets := []map[string]string{
@@ -108,7 +110,7 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 400", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		invalidReqBody := map[string]any{
 			"title":        "",
@@ -151,7 +153,7 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 500", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		devID := uuid.New()
 		assets := []map[string]string{
@@ -202,7 +204,7 @@ func TestGetGame(t *testing.T) {
 	e := echo.New()
 
 	t.Run("happy case - 200", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := uuid.New()
 
@@ -284,7 +286,7 @@ func TestGetGame(t *testing.T) {
 	})
 
 	t.Run("sade case - 400", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
@@ -312,7 +314,7 @@ func TestGetGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 404", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := uuid.New()
 
@@ -337,6 +339,81 @@ func TestGetGame(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, httpErr.Code)
 
 		assert.Equal(t, apperrors.ErrGameNotFound.Error(), httpErr.Message)
+
+		mockSvc.AssertExpectations(t)
+	})
+}
+
+func TestUploadAssets(t *testing.T) {
+	e := echo.New()
+
+	t.Run("happy case - 201", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		// Build multipart/form-data body to mimic a file upload compatible with *multipart.FileHeader
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		// regular fields
+		_ = writer.WriteField("type", "cover")
+		_ = writer.WriteField("filename", "cover.png")
+		_ = writer.WriteField("content_type", "image/png")
+
+		// file field named "content"
+		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		// write some fake PNG bytes
+		fakePNG := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+		if _, err := fileWriter.Write(fakePNG); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/game", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		uploadResult := &command.UploadAssetsCommandResult{
+			Result: []*common.AssetResult{
+				{
+					ID:       uuid.New(),
+					Type:     entities.CoverImage,
+					URL:      "https://storage.example.com/games/cover.png",
+					Filename: "cover.png",
+				},
+			},
+		}
+
+		mockSvc.On("UploadAssets", mock.Anything, mock.AnythingOfType("*command.UploadAssetsCommand")).Return(uploadResult, nil)
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		expectedResponseBody := []string{
+			"https://storage.example.com/games/cover.png",
+		}
+
+		var actualResponseBody map[string]any
+
+		err = json.Unmarshal(rec.Body.Bytes(), &actualResponseBody)
+		if err != nil {
+			t.Fatalf("failed to decode response body: %v", err)
+		}
+
+		assert.Equal(t, expectedResponseBody, actualResponseBody)
 
 		mockSvc.AssertExpectations(t)
 	})

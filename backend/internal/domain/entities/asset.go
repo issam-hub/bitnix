@@ -25,6 +25,15 @@ type Asset struct {
 	Filename string
 }
 
+func NewAsset(fileType AssetType, url string, filename string) *Asset {
+	return &Asset{
+		ID:       uuid.New(),
+		Type:     fileType,
+		URL:      url,
+		Filename: filename,
+	}
+}
+
 var urlRegex = regexp.MustCompile(`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$`)
 
 func (a Asset) Validate() validator.ValidationErrors {

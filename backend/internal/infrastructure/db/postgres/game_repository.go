@@ -15,6 +15,12 @@ type PostgresGameRepository struct {
 	DB *sql.DB
 }
 
+func NewPostgresGameRepository(db *sql.DB) *PostgresGameRepository {
+	return &PostgresGameRepository{
+		DB: db,
+	}
+}
+
 func (pgr PostgresGameRepository) Create(ctx context.Context, game entities.Game) error {
 	query := `
 	INSERT INTO games

@@ -4,7 +4,9 @@ import (
 	"bitnix-backend/config"
 	"bitnix-backend/internal/application/services"
 	pg_infra "bitnix-backend/internal/infrastructure/db/postgres"
+	"bitnix-backend/internal/infrastructure/storage"
 	"bitnix-backend/internal/interface/api/rest"
+	storageclient "bitnix-backend/pkg/storage_client"
 	"context"
 	"database/sql"
 	"log/slog"
@@ -22,10 +24,17 @@ type Server struct {
 }
 
 func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
-	gameRepo := pg_infra.PostgresGameRepository{DB: db}
-	assetRepo := pg_infra.PostgresAssetRepository{DB: db}
+	gameRepo := pg_infra.NewPostgresGameRepository(db)
+	assetRepo := pg_infra.NewPostgresAssetRepository(db)
 
-	gameService := services.NewGameService(&gameRepo, &assetRepo)
+	sc, err := storageclient.NewCloudinaryInstance(cfg.StorageClient.CloudinaryURL)
+	if err != nil {
+
+	}
+
+	storageClient := storage.NewStorageClient(sc)
+
+	gameService := services.NewGameService(gameRepo, assetRepo, storageClient)
 
 	app := echo.New()
 

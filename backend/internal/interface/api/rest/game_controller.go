@@ -28,6 +28,7 @@ func NewgameController(e *echo.Echo, service interfaces.GameService) *GameContro
 
 	router.POST("/game", controller.CreateGameController)
 	router.GET("/game/:id", controller.GetGameController)
+	router.POST("/assets/upload", controller.UploadAssetsController)
 
 	return controller
 }
@@ -103,4 +104,18 @@ func (gc *GameController) GetGameController(c echo.Context) error {
 	response := mapper.ToGetGameResponse(result.Result)
 
 	return c.JSON(http.StatusOK, response)
+}
+
+// @Summary Upload assets
+// @Description upload a set of assets to a claude-based storage client
+// @Tags Game Service
+// @Accept json
+// @Produce json
+// @Param request body request.UploadAssetsRequest true "Assets upload request"
+// @Success 201 {object} response.UploadAssetsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} resterror.ErrInternal
+// @Router /assets/upload [post]
+func (gc *GameController) UploadAssetsController(c echo.Context) error {
+	return nil
 }
