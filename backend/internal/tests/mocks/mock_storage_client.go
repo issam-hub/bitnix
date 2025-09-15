@@ -11,8 +11,8 @@ type MockStorageClient struct {
 	mock.Mock
 }
 
-func (m *MockStorageClient) Upload(ctx context.Context, path string, content io.Reader, contentType string) (string, error) {
-	args := m.Called(ctx, path, content, contentType)
+func (m *MockStorageClient) Upload(ctx context.Context, filename, path string, content io.Reader, contentType string) (string, error) {
+	args := m.Called(ctx, filename, path, content, contentType)
 	return args.String(0), args.Error(1)
 }
 

@@ -101,7 +101,7 @@ func (s GameService) GetGame(ctx context.Context, id uuid.UUID) (*query.GameQuer
 func (s GameService) UploadAssets(ctx context.Context, assetsCommand *command.UploadAssetsCommand) (*command.UploadAssetsCommandResult, error) {
 	var uploadResults []*common.AssetResult
 	for _, asset := range assetsCommand.Assets {
-		url, err := s.storageClient.Upload(ctx, "uploads/files/"+asset.Filename, asset.Content, asset.ContentType)
+		url, err := s.storageClient.Upload(ctx, asset.Filename, "uploads/files/"+asset.Filename, asset.Content, asset.ContentType)
 		if err != nil {
 			return nil, err
 		}

@@ -99,21 +99,6 @@ func (req *CreateGameRequest) Validate() validator.ValidationErrors {
 	return errors
 }
 
-func parseAssetType(assetType string) (entities.AssetType, error) {
-	switch assetType {
-	case "cover":
-		return entities.CoverImage, nil
-	case "trailer":
-		return entities.TrailerVideo, nil
-	case "download":
-		return entities.DownloadFile, nil
-	case "screenshot":
-		return entities.Screeshot, nil
-	default:
-		return "", fmt.Errorf("invalid asset type: %s", assetType)
-	}
-}
-
 func (req *CreateGameRequest) ToCreateGameCommand() (*command.CreateGameCommand, error) {
 	validationErrors := req.Validate()
 	if validationErrors.HasErrors() {
@@ -137,7 +122,7 @@ func (req *CreateGameRequest) ToCreateGameCommand() (*command.CreateGameCommand,
 
 	var assetDetails []command.AssetDetail
 	for _, asset := range req.Assets {
-		assetType, err := parseAssetType(asset.Type)
+		assetType, err := entities.ParseAssetType(asset.Type)
 		if err != nil {
 			return nil, append(validationErrors, validator.ValidationError{
 				Field:   "assets.type",

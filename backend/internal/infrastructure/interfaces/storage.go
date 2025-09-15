@@ -7,7 +7,7 @@ import (
 
 type StorageClient interface {
 	// Upload stores a file in the storage
-	Upload(ctx context.Context, path string, content io.Reader, contentType string) (string, error)
+	Upload(ctx context.Context, filename, path string, content io.Reader, contentType string) (string, error)
 
 	// Download retrieves a file from the storage
 	Download(ctx context.Context, path string) (io.ReadCloser, error)

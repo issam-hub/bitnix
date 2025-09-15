@@ -193,8 +193,8 @@ func TestGameService(t *testing.T) {
 
 		ctx := context.Background()
 
-		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.Anything, "application/octet-stream").Return("https://storage.example.com/games/download.exe", nil).Once()
-		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.Anything, "image/png").Return("https://storage.example.com/games/screenshot.png", nil).Once()
+		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything, "application/octet-stream").Return("https://storage.example.com/games/download.exe", nil).Once()
+		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything, "image/png").Return("https://storage.example.com/games/screenshot.png", nil).Once()
 
 		result, err := svc.UploadAssets(ctx, assetsCommand)
 
@@ -218,7 +218,7 @@ func TestGameService(t *testing.T) {
 
 		ctx := context.Background()
 
-		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.Anything, "application/octet-stream").Return("", errors.New("error while uploading download.exe")).Once()
+		storageClient.On("Upload", ctx, mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.Anything, "application/octet-stream").Return("", errors.New("error while uploading download.exe")).Once()
 
 		result, err := svc.UploadAssets(ctx, assetsCommand)
 

@@ -35,7 +35,13 @@ type (
 	}
 
 	StorageClient struct {
+		// Cloudinary
 		CloudinaryURL string `env:"CLOUDINARY_URL"`
+
+		// Supabase
+		SupabaseProjectRef string `env:"SUPABASE_PROJECT_REF"`
+		SupabaseAPIKey     string `env:"SUPABASE_API_KEY"`
+		SupabaseBucket     string `env:"SUPABASE_BUCKET"`
 	}
 )
 

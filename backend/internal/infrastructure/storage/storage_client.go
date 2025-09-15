@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -18,13 +19,18 @@ func NewStorageClient(cld *cloudinary.Cloudinary) *StorageClient {
 	}
 }
 
-func (sc *StorageClient) Upload(ctx context.Context, path string, content io.Reader, contentType string) (string, error) {
+func (sc *StorageClient) Upload(ctx context.Context, filename, path string, content io.Reader, contentType string) (string, error) {
 	res, err := sc.CLD.Upload.Upload(ctx, content, uploader.UploadParams{
-		DisplayName:  path,
+		AssetFolder:  path,
+		DisplayName:  filename,
 		ResourceType: contentType,
 	})
 	if err != nil {
-		return "", nil
+		return "", err
+	}
+
+	if res.Error.Message != "" {
+		return "", errors.New(res.Error.Message)
 	}
 
 	return res.SecureURL, nil

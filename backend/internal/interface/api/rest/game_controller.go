@@ -8,6 +8,7 @@ import (
 	"bitnix-backend/internal/validator"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -117,5 +118,30 @@ func (gc *GameController) GetGameController(c echo.Context) error {
 // @Failure 500 {object} resterror.ErrInternal
 // @Router /assets/upload [post]
 func (gc *GameController) UploadAssetsController(c echo.Context) error {
-	return nil
+	var uploadAssetsRequest request.UploadAssetsRequest
+
+	if err := c.Bind(&uploadAssetsRequest); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	uploadAssetsCommand, err := uploadAssetsRequest.ToUploadAssetsCommand()
+	if err != nil {
+		if errors, ok := err.(validator.ValidationErrors); ok {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.ToMap())
+		}
+		return echo.ErrInternalServerError
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := gc.service.UploadAssets(ctx, uploadAssetsCommand)
+	if err != nil {
+		fmt.Println("rah sra error ya kho: ", err.Error())
+		return echo.ErrInternalServerError
+	}
+
+	response := mapper.ToUploadAssetsResponse(result.Result)
+
+	return c.JSON(http.StatusCreated, response)
 }

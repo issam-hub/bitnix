@@ -34,5 +34,11 @@ func (m *MockGameService) GetGame(ctx context.Context, id uuid.UUID) (*query.Gam
 }
 
 func (m *MockGameService) UploadAssets(ctx context.Context, assetsCommand *command.UploadAssetsCommand) (*command.UploadAssetsCommandResult, error) {
-	return nil, nil
+	args := m.Called(ctx, assetsCommand)
+
+	if result := args.Get(0); result != nil {
+		return result.(*command.UploadAssetsCommandResult), args.Error(1)
+	}
+
+	return nil, args.Error(1)
 }

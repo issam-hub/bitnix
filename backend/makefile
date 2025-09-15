@@ -1,3 +1,5 @@
+include .env
+
 .PHONY: run
 run: build
 	@./bin/app
@@ -13,7 +15,7 @@ migrate:
 	migrate create -seq -ext=.sql -dir=./migrations $$name
 
 
-MIGRATE_PATH := migrate -path=./migrations -database=${BITNIX_DSN}
+MIGRATE_PATH := migrate -path=./migrations -database=${DSN}
 
 .PHONY: migrateRun
 migrateRun:

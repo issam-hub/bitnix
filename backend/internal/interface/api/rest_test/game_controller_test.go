@@ -350,23 +350,19 @@ func TestUploadAssets(t *testing.T) {
 	t.Run("happy case - 201", func(t *testing.T) {
 		mockSvc := new(mocks.MockGameService)
 
-		// Build multipart/form-data body to mimic a file upload compatible with *multipart.FileHeader
 		var body bytes.Buffer
 		writer := multipart.NewWriter(&body)
 
-		// regular fields
-		_ = writer.WriteField("type", "cover")
-		_ = writer.WriteField("filename", "cover.png")
-		_ = writer.WriteField("content_type", "image/png")
+		_ = writer.WriteField("type", "download")
+		_ = writer.WriteField("filename", "download.exe")
+		_ = writer.WriteField("content_type", "application/octet-stream")
 
-		// file field named "content"
-		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		fileWriter, err := writer.CreateFormFile("content", "download.exe")
 		if err != nil {
 			t.Fatalf("failed to create form file: %v", err)
 		}
-		// write some fake PNG bytes
-		fakePNG := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
-		if _, err := fileWriter.Write(fakePNG); err != nil {
+		fakeExec := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+		if _, err := fileWriter.Write(fakeExec); err != nil {
 			t.Fatalf("failed to write fake file content: %v", err)
 		}
 
@@ -374,7 +370,7 @@ func TestUploadAssets(t *testing.T) {
 			t.Fatalf("failed to close multipart writer: %v", err)
 		}
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/game", &body)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
 		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
 
 		rec := httptest.NewRecorder()
@@ -387,9 +383,9 @@ func TestUploadAssets(t *testing.T) {
 			Result: []*common.AssetResult{
 				{
 					ID:       uuid.New(),
-					Type:     entities.CoverImage,
-					URL:      "https://storage.example.com/games/cover.png",
-					Filename: "cover.png",
+					Type:     entities.DownloadFile,
+					URL:      "https://storage.example.com/games/download.exe",
+					Filename: "download.exe",
 				},
 			},
 		}
@@ -402,8 +398,10 @@ func TestUploadAssets(t *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, rec.Code)
 
-		expectedResponseBody := []string{
-			"https://storage.example.com/games/cover.png",
+		expectedResponseBody := map[string]any{
+			"urls": []any{
+				"https://storage.example.com/games/download.exe",
+			},
 		}
 
 		var actualResponseBody map[string]any
@@ -417,4 +415,100 @@ func TestUploadAssets(t *testing.T) {
 
 		mockSvc.AssertExpectations(t)
 	})
+
+	t.Run("sad case - 400", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		_ = writer.WriteField("type", "cover")
+		_ = writer.WriteField("filename", "cover.png")
+		_ = writer.WriteField("content_type", "image/png")
+
+		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		fakePNG := []byte{}
+		if _, err := fileWriter.Write(fakePNG); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
+
+		expectedErrors := map[string]string{
+			"content": "content size must not be zero",
+		}
+
+		assert.Equal(t, expectedErrors, httpErr.Message)
+	})
+
+	t.Run("sad case - 500", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		_ = writer.WriteField("type", "cover")
+		_ = writer.WriteField("filename", "cover.png")
+		_ = writer.WriteField("content_type", "image/png")
+
+		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		fakePNG := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+		if _, err := fileWriter.Write(fakePNG); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		mockSvc.On("UploadAssets", mock.Anything, mock.AnythingOfType("*command.UploadAssetsCommand")).Return(nil, errors.New("some 500 error while uploading"))
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+		assert.Equal(t, http.StatusInternalServerError, httpErr.Code)
+
+		expectedError := "Internal Server Error"
+
+		assert.Equal(t, expectedError, httpErr.Message)
+
+		mockSvc.AssertExpectations(t)
+	})
+
 }

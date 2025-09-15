@@ -29,7 +29,7 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 
 	sc, err := storageclient.NewCloudinaryInstance(cfg.StorageClient.CloudinaryURL)
 	if err != nil {
-
+		return nil, err
 	}
 
 	storageClient := storage.NewStorageClient(sc)
