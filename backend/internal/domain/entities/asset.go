@@ -25,43 +25,31 @@ type Asset struct {
 	Filename string
 }
 
+func NewAsset(fileType AssetType, url string, filename string) *Asset {
+	return &Asset{
+		ID:       uuid.New(),
+		Type:     fileType,
+		URL:      url,
+		Filename: filename,
+	}
+}
+
 var urlRegex = regexp.MustCompile(`^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$`)
 
-func (a Asset) Validate() validator.ValidationErrors {
-	var errors validator.ValidationErrors
-
-	if strings.TrimSpace(a.Filename) == "" {
-		errors = append(errors, validator.ValidationError{
-			Field:   "filename",
-			Message: "filename is required",
-		})
-	}
-
-	if a.GameID == uuid.Nil {
-		errors = append(errors, validator.ValidationError{
-			Field:   "gameID",
-			Message: "game ID is required",
-		})
-	}
-
-	if a.Type == "" {
-		errors = append(errors, validator.ValidationError{
+func ParseAssetType(assetType string) (AssetType, error) {
+	switch strings.ToLower(strings.TrimSpace(assetType)) {
+	case string(CoverImage):
+		return CoverImage, nil
+	case string(TrailerVideo):
+		return TrailerVideo, nil
+	case string(DownloadFile):
+		return DownloadFile, nil
+	case string(Screeshot):
+		return Screeshot, nil
+	default:
+		return "", validator.ValidationErrors{validator.ValidationError{
 			Field:   "type",
-			Message: "asset type is required",
-		})
+			Message: "invalid asset type",
+		}}
 	}
-
-	if strings.TrimSpace(a.URL) == "" {
-		errors = append(errors, validator.ValidationError{
-			Field:   "url",
-			Message: "URL is required",
-		})
-	} else if !urlRegex.MatchString(a.URL) {
-		errors = append(errors, validator.ValidationError{
-			Field:   "url",
-			Message: "URL format is invalid",
-		})
-	}
-
-	return errors
 }

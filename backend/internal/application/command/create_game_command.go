@@ -3,6 +3,7 @@ package command
 import (
 	"bitnix-backend/internal/application/common"
 	"bitnix-backend/internal/domain/entities"
+	"io"
 	"time"
 
 	"github.com/Rhymond/go-money"
@@ -10,9 +11,11 @@ import (
 )
 
 type AssetDetail struct {
-	Type     entities.AssetType
-	URL      string
-	Filename string
+	Type        entities.AssetType
+	URL         string
+	Filename    string
+	Content     io.Reader
+	ContentType string
 }
 
 type CreateGameCommand struct {

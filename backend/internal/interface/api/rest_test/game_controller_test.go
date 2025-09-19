@@ -7,10 +7,12 @@ import (
 	"bitnix-backend/internal/domain/apperrors"
 	"bitnix-backend/internal/domain/entities"
 	"bitnix-backend/internal/interface/api/rest"
+	"bitnix-backend/internal/tests/mocks"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -29,7 +31,7 @@ func TestCreateGame(t *testing.T) {
 	e := echo.New()
 
 	t.Run("happy case - 201", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		devID := uuid.New()
 		assets := []map[string]string{
@@ -108,7 +110,7 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 400", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		invalidReqBody := map[string]any{
 			"title":        "",
@@ -151,7 +153,7 @@ func TestCreateGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 500", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		devID := uuid.New()
 		assets := []map[string]string{
@@ -202,7 +204,7 @@ func TestGetGame(t *testing.T) {
 	e := echo.New()
 
 	t.Run("happy case - 200", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := uuid.New()
 
@@ -284,7 +286,7 @@ func TestGetGame(t *testing.T) {
 	})
 
 	t.Run("sade case - 400", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
@@ -312,7 +314,7 @@ func TestGetGame(t *testing.T) {
 	})
 
 	t.Run("sad case - 404", func(t *testing.T) {
-		mockSvc := new(MockGameService)
+		mockSvc := new(mocks.MockGameService)
 
 		gameID := uuid.New()
 
@@ -340,4 +342,173 @@ func TestGetGame(t *testing.T) {
 
 		mockSvc.AssertExpectations(t)
 	})
+}
+
+func TestUploadAssets(t *testing.T) {
+	e := echo.New()
+
+	t.Run("happy case - 201", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		_ = writer.WriteField("type", "download")
+		_ = writer.WriteField("filename", "download.exe")
+		_ = writer.WriteField("content_type", "application/octet-stream")
+
+		fileWriter, err := writer.CreateFormFile("content", "download.exe")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		fakeExec := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+		if _, err := fileWriter.Write(fakeExec); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		uploadResult := &command.UploadAssetsCommandResult{
+			Result: []*common.AssetResult{
+				{
+					ID:       uuid.New(),
+					Type:     entities.DownloadFile,
+					URL:      "https://storage.example.com/games/download.exe",
+					Filename: "download.exe",
+				},
+			},
+		}
+
+		mockSvc.On("UploadAssets", mock.Anything, mock.AnythingOfType("*command.UploadAssetsCommand")).Return(uploadResult, nil)
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusCreated, rec.Code)
+
+		expectedResponseBody := map[string]any{
+			"urls": []any{
+				"https://storage.example.com/games/download.exe",
+			},
+		}
+
+		var actualResponseBody map[string]any
+
+		err = json.Unmarshal(rec.Body.Bytes(), &actualResponseBody)
+		if err != nil {
+			t.Fatalf("failed to decode response body: %v", err)
+		}
+
+		assert.Equal(t, expectedResponseBody, actualResponseBody)
+
+		mockSvc.AssertExpectations(t)
+	})
+
+	t.Run("sad case - 400", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		_ = writer.WriteField("type", "cover")
+		_ = writer.WriteField("filename", "cover.png")
+		_ = writer.WriteField("content_type", "image/png")
+
+		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		fakePNG := []byte{}
+		if _, err := fileWriter.Write(fakePNG); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
+
+		expectedErrors := map[string]string{
+			"content": "content size must not be zero",
+		}
+
+		assert.Equal(t, expectedErrors, httpErr.Message)
+	})
+
+	t.Run("sad case - 500", func(t *testing.T) {
+		mockSvc := new(mocks.MockGameService)
+
+		var body bytes.Buffer
+		writer := multipart.NewWriter(&body)
+
+		_ = writer.WriteField("type", "cover")
+		_ = writer.WriteField("filename", "cover.png")
+		_ = writer.WriteField("content_type", "image/png")
+
+		fileWriter, err := writer.CreateFormFile("content", "cover.png")
+		if err != nil {
+			t.Fatalf("failed to create form file: %v", err)
+		}
+		fakePNG := []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
+		if _, err := fileWriter.Write(fakePNG); err != nil {
+			t.Fatalf("failed to write fake file content: %v", err)
+		}
+
+		if err := writer.Close(); err != nil {
+			t.Fatalf("failed to close multipart writer: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/upload", &body)
+		req.Header.Set(echo.HeaderContentType, writer.FormDataContentType())
+
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+
+		ctrl := rest.NewgameController(e, mockSvc)
+
+		mockSvc.On("UploadAssets", mock.Anything, mock.AnythingOfType("*command.UploadAssetsCommand")).Return(nil, errors.New("some 500 error while uploading"))
+
+		err = ctrl.UploadAssetsController(c)
+
+		assert.Error(t, err)
+
+		httpErr, _ := err.(*echo.HTTPError)
+		assert.Equal(t, http.StatusInternalServerError, httpErr.Code)
+
+		expectedError := "Internal Server Error"
+
+		assert.Equal(t, expectedError, httpErr.Message)
+
+		mockSvc.AssertExpectations(t)
+	})
+
 }

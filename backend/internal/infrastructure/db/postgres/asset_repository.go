@@ -12,6 +12,12 @@ type PostgresAssetRepository struct {
 	DB *sql.DB
 }
 
+func NewPostgresAssetRepository(db *sql.DB) *PostgresAssetRepository {
+	return &PostgresAssetRepository{
+		DB: db,
+	}
+}
+
 func (par PostgresAssetRepository) CreateAll(ctx context.Context, assets []entities.Asset) error {
 	query := `INSERT INTO assets
 	(id, game_id, type, url, filename)

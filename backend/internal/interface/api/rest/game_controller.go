@@ -8,6 +8,7 @@ import (
 	"bitnix-backend/internal/validator"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,6 +29,7 @@ func NewgameController(e *echo.Echo, service interfaces.GameService) *GameContro
 
 	router.POST("/game", controller.CreateGameController)
 	router.GET("/game/:id", controller.GetGameController)
+	router.POST("/assets/upload", controller.UploadAssetsController)
 
 	return controller
 }
@@ -103,4 +105,43 @@ func (gc *GameController) GetGameController(c echo.Context) error {
 	response := mapper.ToGetGameResponse(result.Result)
 
 	return c.JSON(http.StatusOK, response)
+}
+
+// @Summary Upload assets
+// @Description upload a set of assets to a claude-based storage client
+// @Tags Game Service
+// @Accept json
+// @Produce json
+// @Param request body request.UploadAssetsRequest true "Assets upload request"
+// @Success 201 {object} response.UploadAssetsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} resterror.ErrInternal
+// @Router /assets/upload [post]
+func (gc *GameController) UploadAssetsController(c echo.Context) error {
+	var uploadAssetsRequest request.UploadAssetsRequest
+
+	if err := c.Bind(&uploadAssetsRequest); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	uploadAssetsCommand, err := uploadAssetsRequest.ToUploadAssetsCommand()
+	if err != nil {
+		if errors, ok := err.(validator.ValidationErrors); ok {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.ToMap())
+		}
+		return echo.ErrInternalServerError
+	}
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// defer cancel()
+
+	result, err := gc.service.UploadAssets(context.Background(), uploadAssetsCommand)
+	if err != nil {
+		fmt.Println("el errorr: ", err)
+		return echo.ErrInternalServerError
+	}
+
+	response := mapper.ToUploadAssetsResponse(result.Result)
+
+	return c.JSON(http.StatusCreated, response)
 }

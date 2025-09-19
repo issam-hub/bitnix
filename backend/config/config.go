@@ -12,9 +12,10 @@ import (
 
 type (
 	Config struct {
-		App  App
-		HTTP HTTP
-		DB   DB
+		App           App
+		HTTP          HTTP
+		DB            DB
+		StorageClient StorageClient
 	}
 
 	App struct {
@@ -31,6 +32,16 @@ type (
 		MaxOpenConns    int    `env:"MAX_OPEN_CONNS"`
 		MaxIdleConns    int    `env:"MAX_IDLE_CONNS"`
 		MaxIdleLifeTime string `env:"MAX_IDLE_LIFE_TIME"`
+	}
+
+	StorageClient struct {
+		// Cloudinary
+		CloudinaryURL string `env:"CLOUDINARY_URL"`
+
+		// Supabase
+		SupabaseProjectRef string `env:"SUPABASE_PROJECT_REF"`
+		SupabaseAPIKey     string `env:"SUPABASE_API_KEY"`
+		SupabaseBucket     string `env:"SUPABASE_BUCKET"`
 	}
 )
 
