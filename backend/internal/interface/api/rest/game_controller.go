@@ -132,12 +132,12 @@ func (gc *GameController) UploadAssetsController(c echo.Context) error {
 		return echo.ErrInternalServerError
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// defer cancel()
 
-	result, err := gc.service.UploadAssets(ctx, uploadAssetsCommand)
+	result, err := gc.service.UploadAssets(context.Background(), uploadAssetsCommand)
 	if err != nil {
-		fmt.Println("rah sra error ya kho: ", err.Error())
+		fmt.Println("el errorr: ", err)
 		return echo.ErrInternalServerError
 	}
 

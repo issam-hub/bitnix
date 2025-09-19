@@ -6,7 +6,6 @@ import (
 	pg_infra "bitnix-backend/internal/infrastructure/db/postgres"
 	"bitnix-backend/internal/infrastructure/storage"
 	"bitnix-backend/internal/interface/api/rest"
-	storageclient "bitnix-backend/pkg/storage_client"
 	"context"
 	"database/sql"
 	"log/slog"
@@ -27,14 +26,14 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 	gameRepo := pg_infra.NewPostgresGameRepository(db)
 	assetRepo := pg_infra.NewPostgresAssetRepository(db)
 
-	sc, err := storageclient.NewCloudinaryInstance(cfg.StorageClient.CloudinaryURL)
+	cloudClient, supaClient, err := storage.BuildStorageClients(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	storageClient := storage.NewStorageClient(sc)
+	storageClientIface := storage.NewMultiStorageClient(cloudClient, supaClient)
 
-	gameService := services.NewGameService(gameRepo, assetRepo, storageClient)
+	gameService := services.NewGameService(gameRepo, assetRepo, storageClientIface)
 
 	app := echo.New()
 
