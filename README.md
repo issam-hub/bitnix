@@ -12,7 +12,7 @@ go mod download
 -  **go-migrate**: for database migrations, see this [link](https://github.com/golang-migrate/migrate) 
 -  **echo-swagger**: for swagger docs generation, see this [link](https://github.com/swaggo/echo-swagger)
 
-3- Create `.env` file, check `.env.example` to get an idea
+3- Create `.env` file, check `.env.example` to get an idea <br>
 4- add the environment variable `BITNIX_DSN` that contains the DSN (Data Source Name) for the database
 ```bash
 # .zshrc / .bashrc / .zsh_profile / .bash_profile
