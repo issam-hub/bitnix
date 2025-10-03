@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"slices"
 	"testing"
 	"time"
 
@@ -21,46 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-type inMemoryGameRepository struct {
-	listings []entities.Game
-}
-
-func (mg *inMemoryGameRepository) Create(ctx context.Context, game entities.Game) error {
-	mg.listings = append(mg.listings, game)
-	return nil
-}
-
-func (mg *inMemoryGameRepository) Get(ctx context.Context, id uuid.UUID) (*entities.Game, error) {
-	for _, game := range mg.listings {
-		if game.ID == id {
-			return &game, nil
-		}
-	}
-	return nil, apperrors.ErrGameNotFound
-}
-
-type inMemoryAssetRepository struct {
-	assetsListings []entities.Asset
-}
-
-func (ma *inMemoryAssetRepository) CreateAll(ctx context.Context, assets []entities.Asset) error {
-	ma.assetsListings = slices.Concat(ma.assetsListings, assets)
-	return nil
-}
-func (ma *inMemoryAssetRepository) GetAllByGame(ctx context.Context, gameID uuid.UUID) ([]*entities.Asset, error) {
-	var assets []*entities.Asset
-	for _, asset := range ma.assetsListings {
-		if asset.GameID == gameID {
-			assets = append(assets, &asset)
-		}
-	}
-	if len(assets) > 0 {
-		return assets, nil
-	} else {
-		return nil, errors.New("assets not found")
-	}
-}
 
 type failingInMemoryGameRepository struct{}
 
@@ -73,8 +32,8 @@ func (fmg *failingInMemoryGameRepository) Get(ctx context.Context, id uuid.UUID)
 }
 
 func TestGameService(t *testing.T) {
-	gameRepo := new(inMemoryGameRepository)
-	assetRepo := new(inMemoryAssetRepository)
+	gameRepo := new(mocks.InMemoryGameRepository)
+	assetRepo := new(mocks.InMemoryAssetRepository)
 	storageClient := new(mocks.MockStorageClient)
 	failingGameRepo := &failingInMemoryGameRepository{}
 
@@ -102,12 +61,12 @@ func TestGameService(t *testing.T) {
 			t.Errorf("error while creating the game: %v", err)
 		}
 
-		if len(gameRepo.listings) == 0 {
-			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.listings))
+		if len(gameRepo.Listings) == 0 {
+			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.Listings))
 		}
 
-		if len(assetRepo.assetsListings) == 0 {
-			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.assetsListings))
+		if len(assetRepo.AssetsListings) == 0 {
+			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.AssetsListings))
 		}
 	})
 
@@ -120,12 +79,12 @@ func TestGameService(t *testing.T) {
 			t.Errorf("expected nil or 'failed to create game' error, got: %v", err)
 		}
 
-		if len(gameRepo.listings) == 0 {
-			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.listings))
+		if len(gameRepo.Listings) == 0 {
+			t.Errorf("error while creating the game: want %d, got %d", 1, len(gameRepo.Listings))
 		}
 
-		if len(assetRepo.assetsListings) == 0 {
-			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.assetsListings))
+		if len(assetRepo.AssetsListings) == 0 {
+			t.Errorf("error while creating the game (assets didn't get created): want %d, got %d", 1, len(assetRepo.AssetsListings))
 		}
 	})
 

@@ -8,7 +8,6 @@ import (
 	"bitnix-backend/internal/validator"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -137,7 +136,6 @@ func (gc *GameController) UploadAssetsController(c echo.Context) error {
 
 	result, err := gc.service.UploadAssets(context.Background(), uploadAssetsCommand)
 	if err != nil {
-		fmt.Println("el errorr: ", err)
 		return echo.ErrInternalServerError
 	}
 
