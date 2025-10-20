@@ -5,6 +5,7 @@ import (
 	"bitnix-backend/internal/domain/entities"
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
@@ -50,6 +51,16 @@ func (ma *InMemoryAssetRepository) GetAllByGame(ctx context.Context, gameID uuid
 	}
 }
 
+type FailingInMemoryGameRepository struct{}
+
+func (fmg *FailingInMemoryGameRepository) Create(ctx context.Context, game entities.Game) error {
+	return fmt.Errorf("failed to create game")
+}
+
+func (fmg *FailingInMemoryGameRepository) Get(ctx context.Context, id uuid.UUID) (*entities.Game, error) {
+	return nil, apperrors.ErrGameNotFound
+}
+
 type InMemoryCatalogRepository struct {
 	Items []entities.CatalogItem
 }
@@ -60,4 +71,10 @@ func (mc *InMemoryCatalogRepository) GetAll(ctx context.Context) ([]*entities.Ca
 		result = append(result, &item)
 	}
 	return result, nil
+}
+
+type FailingInMemoryCatalogRepository struct{}
+
+func (fmc *FailingInMemoryCatalogRepository) GetAll(ctx context.Context) ([]*entities.CatalogItem, error) {
+	return nil, errors.New("error happening in catalog repository")
 }

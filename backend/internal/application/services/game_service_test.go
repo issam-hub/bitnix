@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -21,21 +20,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type failingInMemoryGameRepository struct{}
-
-func (fmg *failingInMemoryGameRepository) Create(ctx context.Context, game entities.Game) error {
-	return fmt.Errorf("failed to create game")
-}
-
-func (fmg *failingInMemoryGameRepository) Get(ctx context.Context, id uuid.UUID) (*entities.Game, error) {
-	return nil, apperrors.ErrGameNotFound
-}
-
 func TestGameService(t *testing.T) {
 	gameRepo := new(mocks.InMemoryGameRepository)
 	assetRepo := new(mocks.InMemoryAssetRepository)
 	storageClient := new(mocks.MockStorageClient)
-	failingGameRepo := &failingInMemoryGameRepository{}
+	failingGameRepo := new(mocks.FailingInMemoryGameRepository)
 
 	cmd := command.NewCreateGameCommand(
 		"hollow knight",
