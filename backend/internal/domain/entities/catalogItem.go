@@ -11,3 +11,12 @@ type CatalogItem struct {
 	Price     money.Money
 	Thumbnail string
 }
+
+func NewCatalogItem(gameID uuid.UUID, title string, price money.Money, thumbnail string) *CatalogItem {
+	return &CatalogItem{
+		GameID:    gameID,
+		Title:     title,
+		Price:     price,
+		Thumbnail: thumbnail,
+	}
+}
