@@ -23,8 +23,6 @@ type Server struct {
 }
 
 func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
-	gameRepo := pg_infra.NewPostgresGameRepository(db)
-	assetRepo := pg_infra.NewPostgresAssetRepository(db)
 
 	cloudClient, supaClient, err := storage.BuildStorageClients(cfg)
 	if err != nil {
@@ -32,8 +30,6 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 	}
 
 	storageClientIface := storage.NewMultiStorageClient(cloudClient, supaClient)
-
-	gameService := services.NewGameService(gameRepo, assetRepo, storageClientIface)
 
 	app := echo.New()
 
@@ -43,7 +39,14 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 
 	app.GET("/swagger/*", echoSwagger.WrapHandler)
 
+	gameRepo := pg_infra.NewPostgresGameRepository(db)
+	assetRepo := pg_infra.NewPostgresAssetRepository(db)
+	gameService := services.NewGameService(gameRepo, assetRepo, storageClientIface)
 	rest.NewgameController(app, gameService)
+
+	catalogRepo := pg_infra.NewPostgresCatalogRepository(db)
+	catalogService := services.NewCatalogService(catalogRepo)
+	rest.NewCatalogController(app, catalogService)
 
 	return &Server{
 		app:    app,

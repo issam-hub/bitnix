@@ -12,6 +12,7 @@ type AssetType string
 
 const (
 	CoverImage   AssetType = "cover"
+	Poster       AssetType = "poster"
 	TrailerVideo AssetType = "trailer"
 	DownloadFile AssetType = "download"
 	Screeshot    AssetType = "screenshot"

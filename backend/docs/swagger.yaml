@@ -1,4 +1,3 @@
-basePath: /api/v1
 definitions:
   request.AssetRequest:
     properties:
@@ -25,6 +24,8 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  request.UploadAssetsRequest:
     type: object
   response.AssetResponse:
     properties:
@@ -61,6 +62,31 @@ definitions:
       title:
         type: string
     type: object
+  response.ItemsResponse:
+    properties:
+      id:
+        type: string
+      price:
+        type: number
+      thumbnail:
+        type: string
+      title:
+        type: string
+    type: object
+  response.ListItemsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/response.ItemsResponse'
+        type: array
+    type: object
+  response.UploadAssetsResponse:
+    properties:
+      urls:
+        items:
+          type: string
+        type: array
+    type: object
   resterror.ErrGameNotFoundResponse:
     properties:
       error:
@@ -79,20 +105,66 @@ definitions:
         example: Internal Server Error
         type: string
     type: object
-host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Bitnix REST API documentation
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Bitnix REST API
-  version: "1.0"
+  contact: {}
 paths:
+  /assets/upload:
+    post:
+      consumes:
+      - application/json
+      description: upload a set of assets to a claude-based storage client
+      parameters:
+      - description: Assets upload request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UploadAssetsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.UploadAssetsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/resterror.ErrInternal'
+      summary: Upload assets
+      tags:
+      - Game Service
+  /catalog:
+    get:
+      consumes:
+      - application/json
+      description: List games in a catalog
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ListItemsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/resterror.ErrInternal'
+      summary: List Items
+      tags:
+      - Catalog Service
   /game:
     post:
       consumes:
@@ -158,6 +230,4 @@ paths:
       summary: get a game
       tags:
       - Game Service
-schemes:
-- http
 swagger: "2.0"

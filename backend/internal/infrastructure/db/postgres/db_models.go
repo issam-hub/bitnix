@@ -29,3 +29,10 @@ type Asset struct {
 	UpdatedAt time.Time
 	Version   int32
 }
+
+type CatalogItem struct {
+	GameID    uuid.UUID
+	Title     string
+	Price     float64
+	Thumbnail string
+}
