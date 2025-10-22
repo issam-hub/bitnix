@@ -1,3 +1,3 @@
 DROP TABLE IF EXISTS assets;
 DROP TABLE IF EXISTS games;
-DROP TABLE IF EXISTS asset_type;
+DROP TYPE IF EXISTS asset_type;

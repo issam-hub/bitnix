@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS games (
 );
 
 DO $$ BEGIN
-    CREATE TYPE asset_type AS ENUM ('cover', 'trailer', 'download', 'screenshot');
+    CREATE TYPE asset_type AS ENUM ('cover', 'trailer', 'download', 'screenshot', 'poster');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
