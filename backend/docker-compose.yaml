@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bitnix
+      POSTGRES_PASSWORD: bitnix
+      POSTGRES_DB: bitnix
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bitnix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  games-catalog-api:
+    ports:
+      - "3080:3080"
+    build:
+      dockerfile: game-catalog.dockerfile
+      context: .
+    env_file:
+      - .env
+    environment:
+      - HTTP_PORT=3080
+      - DSN=postgres://bitnix:bitnix@postgres:5432/bitnix?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

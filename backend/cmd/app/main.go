@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-// @title           Bitnix REST API
+// @title           games catalog service REST API
 // @version         1.0
-// @description     Bitnix REST API documentation
+// @description     games catalog service REST API documentation
 // @termsOfService  http://swagger.io/terms/
 
 // @contact.name   API Support

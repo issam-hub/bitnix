@@ -26,6 +26,7 @@ go.work.sum
 
 # env file
 backend/.env
+userService/.env
 
 # Editor/IDE
 # .idea/
@@ -35,5 +36,9 @@ backend/.env
 bin/
 tmp/
 
+userService/bin/
+userService/tmp/
+
 #air config
 backend/.air.toml
+userService/.air.toml
