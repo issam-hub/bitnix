@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 	"user-service/config"
+
 	_ "user-service/docs"
 	"user-service/pkg/httpserver"
 	"user-service/pkg/mongo"

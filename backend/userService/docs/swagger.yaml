@@ -1,0 +1,79 @@
+basePath: /api/v1
+definitions:
+  request.RegisterUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  response.RegisterUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      token:
+        type: string
+      username:
+        type: string
+    type: object
+  resterror.ErrInternal:
+    properties:
+      error:
+        example: Internal Server Error
+        type: string
+    type: object
+host: localhost:7070
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: user accounts & reviews service REST API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: user service REST API
+  version: "1.0"
+paths:
+  /user/signup:
+    post:
+      consumes:
+      - application/json
+      description: Sign up a user
+      parameters:
+      - description: User registeration request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.RegisterUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/resterror.ErrInternal'
+      summary: Create a new user
+      tags:
+      - Accounts Service
+schemes:
+- http
+swagger: "2.0"

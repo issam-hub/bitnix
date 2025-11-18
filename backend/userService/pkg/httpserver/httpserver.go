@@ -5,6 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"user-service/config"
+	"user-service/internal/application/services"
+	mongodb "user-service/internal/infrastructure/db"
+	"user-service/internal/interface/api/rest"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -26,6 +29,12 @@ func NewHTTPServer(db *mongo.Client, cfg *config.Config) (*Server, error) {
 	app.Use(middleware.Recover())
 
 	app.GET("/swagger/*", echoSwagger.WrapHandler)
+
+	accountsRepo := mongodb.NewMongoUserRepository(db)
+
+	accountsService := services.NewAccountsService(accountsRepo)
+
+	rest.NewUserController(app, accountsService)
 
 	return &Server{
 		app:    app,

@@ -35,14 +35,14 @@ func (req *CreateGameRequest) Validate() validator.ValidationErrors {
 	if strings.TrimSpace(req.Title) == "" {
 		errors = append(errors, validator.ValidationError{
 			Field:   "title",
-			Message: "title is required and cannot be empty",
+			Message: "title is required",
 		})
 	}
 
 	if strings.TrimSpace(req.Description) == "" {
 		errors = append(errors, validator.ValidationError{
 			Field:   "description",
-			Message: "description is required and cannot be empty",
+			Message: "description is required",
 		})
 	}
 
