@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"user-service/internal/application/command"
 	"user-service/internal/tests/mocks"
@@ -49,6 +50,42 @@ func TestRegister(t *testing.T) {
 
 		if len(failingUsersRepo.Users) != 0 {
 			t.Errorf("error while registering user: want %d length, got %d length", 0, len(failingUsersRepo.Users))
+		}
+	})
+}
+
+func TestLogin(t *testing.T) {
+	usersRepo := new(mocks.InMemoryUsersRepository)
+
+	cmd := command.NewLoginUserCommand(
+		"test_test",
+		"password123",
+	)
+
+	createCmd := command.NewRegisterUserCommand(
+		"test_test",
+		"test@example.com",
+		"password123",
+		"developer",
+	)
+	t.Run("happy case", func(t *testing.T) {
+		svc := NewAccountsService(usersRepo)
+
+		ctx := context.Background()
+
+		if _, err := svc.Register(ctx, createCmd); err != nil {
+			t.Errorf("error while creating user: %#v", err)
+		}
+
+		result, err := svc.Login(ctx, cmd)
+		if err != nil {
+			t.Errorf("error while logging in user: %#v", err)
+		}
+
+		expectedToken := "dGVzdF90ZXN0OnBhc3N3b3JkMTIz"
+
+		if result.Result.Token != fmt.Sprintf("Basic %s", expectedToken) {
+			t.Errorf("error while logging in user: invalid credentials")
 		}
 	})
 }

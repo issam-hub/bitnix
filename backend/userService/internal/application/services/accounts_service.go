@@ -62,3 +62,27 @@ func (s AccountsService) Register(ctx context.Context, userCommand *command.Regi
 	}, nil
 
 }
+
+func (s AccountsService) Login(ctx context.Context, userCommand *command.LoginUserCommand) (*command.LoginUserCommandResult, error) {
+	user, err := s.usersRepo.GetByUsername(ctx, userCommand.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	match, err := user.Password.Matches(userCommand.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	if !match {
+		return nil, errors.New("invalid user credentials")
+	}
+
+	token := EncodeBasicToken(userCommand.Username, userCommand.Password)
+
+	commandResult := mapper.NewLoginUserResultFromEntity(user, token)
+
+	return &command.LoginUserCommandResult{
+		Result: commandResult,
+	}, nil
+}

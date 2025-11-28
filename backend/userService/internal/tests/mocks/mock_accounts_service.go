@@ -20,3 +20,7 @@ func (m *MockAccountsService) Register(ctx context.Context, userCommand *command
 
 	return nil, args.Error(1)
 }
+
+func (m *MockAccountsService) Login(ctx context.Context, userCommand *command.LoginUserCommand) (*command.LoginUserCommandResult, error) {
+	return nil, nil
+}
