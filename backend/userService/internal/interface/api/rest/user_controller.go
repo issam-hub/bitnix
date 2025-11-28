@@ -67,3 +67,31 @@ func (ac *UserController) RegisterUserController(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, response)
 }
+
+// func (ac *UserController) LoginUserController(c echo.Context) error {
+// 	var loginUserRequest request.LoginUserRequest
+
+// 	if err := c.Bind(&loginUserRequest); err != nil {
+// 		return echo.NewHTTPError(http.StatusBadRequest, err)
+// 	}
+
+// 	loginUserCommand, err := loginUserRequest.ToLoginUserCommand()
+// 	if err != nil {
+// 		if errors, ok := err.(validator.ValidationErrors); ok {
+// 			return echo.NewHTTPError(http.StatusBadRequest, errors.ToMap())
+// 		}
+// 		return echo.ErrInternalServerError
+// 	}
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+// 	defer cancel()
+
+// 	result, err := ac.accountsService.Login(ctx, loginUserCommand)
+// 	if err != nil {
+// 		return echo.ErrInternalServerError
+// 	}
+
+// 	response := mapper.ToRegisterUserResponse(result.Result)
+
+// 	return c.JSON(http.StatusCreated, response)
+// }
