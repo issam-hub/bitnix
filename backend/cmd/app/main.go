@@ -38,7 +38,7 @@ func main() {
 
 	defer db.Close()
 
-	httpServer, err := httpserver.NewHTTPServer(db, config)
+	httpServer, err := httpserver.StartHTTPServer(db, config)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}

@@ -43,7 +43,7 @@ func main() {
 		}
 	}()
 
-	httpServer, err := httpserver.NewHTTPServer(dbClient, config)
+	httpServer, err := httpserver.StartHTTPServer(dbClient, config)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}

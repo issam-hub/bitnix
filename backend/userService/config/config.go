@@ -12,9 +12,10 @@ import (
 
 type (
 	Config struct {
-		App  App
-		HTTP HTTP
-		DB   DB
+		App   App
+		HTTP  HTTP
+		DB    DB
+		Kafka Kafka
 	}
 
 	App struct {
@@ -28,6 +29,11 @@ type (
 
 	DB struct {
 		URI string `env:"MONGODB_URI"`
+	}
+
+	Kafka struct {
+		Broker string `env:"KAFKA_BROKER"`
+		Topic  string `env:"KAFKA_TOPIC"`
 	}
 )
 
