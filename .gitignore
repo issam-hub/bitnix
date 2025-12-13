@@ -40,5 +40,5 @@ userService/bin/
 userService/tmp/
 
 #air config
-backend/.air.toml
+coreService/.air.toml
 userService/.air.toml
