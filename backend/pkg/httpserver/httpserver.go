@@ -4,12 +4,14 @@ import (
 	"bitnix-backend/config"
 	"bitnix-backend/internal/application/services"
 	pg_infra "bitnix-backend/internal/infrastructure/db/postgres"
+	"bitnix-backend/internal/infrastructure/events/kafka/publisher"
 	"bitnix-backend/internal/infrastructure/storage"
 	"bitnix-backend/internal/interface/api/rest"
 	"context"
 	"database/sql"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -22,7 +24,7 @@ type Server struct {
 	config *config.Config
 }
 
-func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
+func StartHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 
 	cloudClient, supaClient, err := storage.BuildStorageClients(cfg)
 	if err != nil {
@@ -48,10 +50,9 @@ func NewHTTPServer(db *sql.DB, cfg *config.Config) (*Server, error) {
 	catalogService := services.NewCatalogService(catalogRepo)
 	rest.NewCatalogController(app, catalogService)
 
-	return &Server{
-		app:    app,
-		config: cfg,
-	}, nil
+	publisher.StartPoller(db, cfg.Kafka.Broker, cfg.Kafka.Topic, 5*time.Second)
+
+	return &Server{}, nil
 }
 
 func (s *Server) Start() error {

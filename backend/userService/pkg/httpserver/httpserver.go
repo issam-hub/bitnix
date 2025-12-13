@@ -4,9 +4,11 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"time"
 	"user-service/config"
 	"user-service/internal/application/services"
 	mongodb "user-service/internal/infrastructure/db"
+	"user-service/internal/infrastructure/events/kafka/publisher"
 	"user-service/internal/interface/api/rest"
 
 	"github.com/labstack/echo/v4"
@@ -20,7 +22,7 @@ type Server struct {
 	config *config.Config
 }
 
-func NewHTTPServer(db *mongo.Client, cfg *config.Config) (*Server, error) {
+func StartHTTPServer(db *mongo.Client, cfg *config.Config) (*Server, error) {
 
 	app := echo.New()
 
@@ -36,10 +38,9 @@ func NewHTTPServer(db *mongo.Client, cfg *config.Config) (*Server, error) {
 
 	rest.NewUserController(app, accountsService)
 
-	return &Server{
-		app:    app,
-		config: cfg,
-	}, nil
+	publisher.StartPoller(db.Database("user-service"), cfg.Kafka.Broker, cfg.Kafka.Topic, 5*time.Second)
+
+	return &Server{}, nil
 }
 
 func (s *Server) Start() error {

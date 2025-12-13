@@ -16,6 +16,7 @@ type (
 		HTTP          HTTP
 		DB            DB
 		StorageClient StorageClient
+		Kafka         Kafka
 	}
 
 	App struct {
@@ -42,6 +43,11 @@ type (
 		SupabaseProjectRef string `env:"SUPABASE_PROJECT_REF"`
 		SupabaseAPIKey     string `env:"SUPABASE_API_KEY"`
 		SupabaseBucket     string `env:"SUPABASE_BUCKET"`
+	}
+
+	Kafka struct {
+		Broker string `env:"KAFKA_BROKER"`
+		Topic  string `env:"KAFKA_TOPIC"`
 	}
 )
 
